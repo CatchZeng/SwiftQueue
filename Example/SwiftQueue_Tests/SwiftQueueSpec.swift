@@ -14,28 +14,53 @@ import SwiftQueue
 class SwiftQueueSpec: QuickSpec {
     override func spec() {
         describe("SwiftQueeu") {
-            context("addOperation", {
+            context("OperationCount", {
                 beforeEach {
                     SwiftQueue.shared.cancelAll()
                 }
                 
-                it("check operationCount when add simple Operation", closure: {
-                    SwiftQueue.shared.addOperation {
-                        print("addOperation 1")
-                        print("addOperation 2")
-                        print("addOperation 2")
-                        print("addOperation 2")
-                        print("addOperation 2")
-                    }
+                it("Add operation will change operationCount.", closure: {
+                    let expectation = self.expectation(description: "OperationCount")
+                    
                     expect(SwiftQueue.shared.operationCount).to(equal(0))
-                })
-                it("check operationCount when add time-consuming Operation", closure: {
-                    SwiftQueue.shared.addOperation {
-                        for i in 0..<5 {
-                            print("addOperation\(i)")
-                        }
+                    
+                    let operation = SwiftOperation {
+                        Thread.sleep(forTimeInterval: 2)
+                        expectation.fulfill()
                     }
+                    SwiftQueue.shared.addOperation(operation)
+                    
                     expect(SwiftQueue.shared.operationCount).to(equal(1))
+                    
+                    self.waitForExpectations(timeout: 3, handler: { (error) in
+                        expect(error).toEventually(beNil())
+                        expect(SwiftQueue.shared.operationCount).to(equal(0))
+                    })
+                })
+            })
+            
+            context("Operations", {
+                beforeEach {
+                    SwiftQueue.shared.cancelAll()
+                }
+                
+                it("Add operation will change Operations.", closure: {
+                    let expectation = self.expectation(description: "Operations")
+                    
+                    expect(SwiftQueue.shared.operations.isEmpty).toEventually(beTruthy())
+                    
+                    let operation = SwiftOperation {
+                        Thread.sleep(forTimeInterval: 2)
+                        expectation.fulfill()
+                    }
+                    SwiftQueue.shared.addOperation(operation)
+                    
+                    expect(SwiftQueue.shared.operations.contains(operation)).toEventually(beTruthy())
+                    
+                    self.waitForExpectations(timeout: 3, handler: { (error) in
+                        expect(error).toEventually(beNil())
+                        expect(SwiftQueue.shared.operations.contains(operation)).toEventually(beFalsy())
+                    })
                 })
             })
         }
