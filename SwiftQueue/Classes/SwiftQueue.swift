@@ -12,40 +12,44 @@ open class SwiftQueue {
     
     public static let shared: SwiftQueue = SwiftQueue(name: "SwiftQueue")
     
-    public var operations: [Operation] {
-        return self.queue.operations
+    public var operationCount: Int {
+        return self.mQueue.operationCount
     }
     
-    public var operationCount: Int {
-        return self.queue.operationCount
+    public var operations: [Operation] {
+        return self.mQueue.operations
     }
     
     public var maxConcurrentOperationCount: Int {
         get {
-            return self.queue.maxConcurrentOperationCount
+            return self.mQueue.maxConcurrentOperationCount
         }
         set {
-            self.queue.maxConcurrentOperationCount = newValue
+            self.mQueue.maxConcurrentOperationCount = newValue
         }
     }
     
     public var isExecuting: Bool {
-        return !self.queue.isSuspended
+        return !self.mQueue.isSuspended
     }
     
-    private let queue: OperationQueue = OperationQueue()
+    public var queue: OperationQueue {
+        return mQueue
+    }
+    
+    private let mQueue: OperationQueue = OperationQueue()
     
     public init(name: String, maxConcurrentOperationCount: Int = Int.max) {
-        self.queue.name = name
+        self.mQueue.name = name
         self.maxConcurrentOperationCount = maxConcurrentOperationCount
     }
     
     public func addOperation(_ operation: @escaping () -> Void) {
-        self.queue.addOperation(operation)
+        self.mQueue.addOperation(operation)
     }
     
     public func addOperation(_ operation: Operation) {
-        self.queue.addOperation(operation)
+        self.mQueue.addOperation(operation)
     }
     
     public func addChainedOperations(_ operations: [Operation], completionHandler: (() -> Void)? = nil) {
@@ -73,26 +77,26 @@ open class SwiftQueue {
     }
     
     public func cancelAll() {
-        self.queue.cancelAllOperations()
+        self.mQueue.cancelAllOperations()
     }
     
     public func pause() {
-        self.queue.isSuspended = true
+        self.mQueue.isSuspended = true
         
-        for operation in self.queue.operations where operation is SwiftOperation {
+        for operation in self.mQueue.operations where operation is SwiftOperation {
             (operation as? SwiftOperation)?.pause()
         }
     }
     
     public func resume() {
-        self.queue.isSuspended = false
+        self.mQueue.isSuspended = false
         
-        for operation in self.queue.operations where operation is SwiftOperation {
+        for operation in self.mQueue.operations where operation is SwiftOperation {
             (operation as? SwiftOperation)?.resume()
         }
     }
     
     public func waitUntilAllOperationsAreFinished() {
-        self.queue.waitUntilAllOperationsAreFinished()
+        self.mQueue.waitUntilAllOperationsAreFinished()
     }
 }
